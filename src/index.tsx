@@ -78,15 +78,12 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
   }, [state, sortIndex]);
 
   useEffect(() => {
-    state.translate = sortTranslate;
-
-    if (!state.clone.element || !state.clone.callback) return;
-    state.clone.callback(sortTranslate, state.clone.element);
-  }, [state, sortTranslate]);
-
-  useEffect(() => {
     scroll && scrollRef?.current?.scrollTo({ left: scroll.x, top: scroll.y });
   }, [scroll, scrollRef]);
+
+  useEffect(() => {
+    state.translate = sortTranslate;
+  }, [state, sortTranslate]);
 
   const getTranslate = useCallback(
     (index: number) => {
@@ -157,6 +154,7 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
           state.raf = window.requestAnimationFrame(calculate);
         }
         setSortTranslate(translate);
+        if (state.clone.element && state.clone.callback) state.clone.callback(translate, state.clone.element);
 
         const [hover, direction] = getHoveredProps(
           {
