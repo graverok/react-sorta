@@ -1,0 +1,56 @@
+{
+  "name": "react-sorta",
+  "version": "0.1.0",
+  "author": {
+    "name": "Aleksandr Gurianov",
+    "url": "http://golova.pro"
+  },
+  "homepage": "https://github.com/graverok/react-sorta#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/graverok/react-sorta.git"
+  },
+  "bugs": {
+    "url": "https://github.com/graverok/react-sorta/issues"
+  },
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "sort",
+    "react"
+  ],
+  "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "@babel/preset-typescript": "^7.23.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/jest": "^29.5.12",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@types/react-window": "^1.8.8",
+    "jest": "^29.7.0",
+    "prettier": "^3.1.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-window": "^1.8.10",
+    "ts-jest": "^29.1.2",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3",
+    "vite": "5.4.6",
+    "vite-plugin-dts": "^4.0.3",
+    "vite-tsconfig-paths": "^4.3.1"
+  },
+  "peerDependencies": {
+    "react": "^16.9.0"
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "test": "jest"
+  },
+  "files": [
+    "dist"
+  ]
+}
