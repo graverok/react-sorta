@@ -175,8 +175,8 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
       };
 
       const handleMove = (ev: PointerEvent) => {
-        currentPosition.x = ev.pageX;
-        currentPosition.y = ev.pageY;
+        currentPosition.x = Math.round(ev.pageX);
+        currentPosition.y = Math.round(ev.pageY);
         window.cancelAnimationFrame(state.raf);
         state.raf = window.requestAnimationFrame(calculate);
       };
@@ -316,15 +316,16 @@ const initSortParams = (
   const itemRect = getItemRect(index);
   const itemBounds = { l: itemRect?.l ?? 0, r: itemRect?.r ?? 0, t: itemRect?.t ?? 0, b: itemRect?.b ?? 0 };
   const scrollRect = getScrollRect(scrollEl);
+  const position = {
+    x: Math.round(e.pageX),
+    y: Math.round(e.pageY),
+  };
 
   return [
+    position,
     {
-      x: e.pageX,
-      y: e.pageY,
-    },
-    {
-      x: itemRect ? itemRect.l + itemRect.w / 2 : e.pageX,
-      y: itemRect ? itemRect.t + itemRect.h / 2 : e.pageY,
+      x: itemRect ? itemRect.l + itemRect.w / 2 : position.x,
+      y: itemRect ? itemRect.t + itemRect.h / 2 : position.y,
     },
     itemBounds,
     {
