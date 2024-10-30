@@ -1,6 +1,6 @@
 {
   "name": "react-sorta",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": {
     "name": "Aleksandr Gurianov",
     "url": "http://golova.pro"
@@ -43,7 +43,7 @@
     "vite-tsconfig-paths": "^4.3.1"
   },
   "peerDependencies": {
-    "react": "^16.9.0"
+    "react": "^16.8.0"
   },
   "scripts": {
     "build": "vite build",
