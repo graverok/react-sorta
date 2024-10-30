@@ -6,6 +6,7 @@ export default defineConfig({
   build: {
     lib: {
       name: "react-sorta",
+      fileName: "react-sorta.js",
       entry: resolve(__dirname, "src/index.tsx"),
     },
     rollupOptions: {

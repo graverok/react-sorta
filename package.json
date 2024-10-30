@@ -14,11 +14,11 @@
     "url": "https://github.com/graverok/react-sorta/issues"
   },
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
+  "main": "dist/geoditor.cjs.js",
+  "browser": "dist/react-sorta.umd.js",
   "types": "dist/index.d.ts",
   "keywords": [
-    "sort",
+    "sortable",
     "react"
   ],
   "devDependencies": {
