@@ -111,7 +111,7 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
   );
 
   const onSortStart = useCallback(
-    (index: number, e: React.MouseEvent) => {
+    (index: number, e: React.MouseEvent | React.PointerEvent) => {
       let to = index;
       setSortIndex(index);
       state.scroll = {
@@ -174,15 +174,15 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
         if (to !== index) state.order.splice(hover, 0, state.order.splice(index, 1)[0]);
       };
 
-      const handleMouseMove = (ev: MouseEvent) => {
+      const handleMove = (ev: PointerEvent) => {
         currentPosition.x = ev.pageX;
         currentPosition.y = ev.pageY;
         window.cancelAnimationFrame(state.raf);
         state.raf = window.requestAnimationFrame(calculate);
       };
 
-      const handleMouseUp = () => {
-        document.removeEventListener("mousemove", handleMouseMove);
+      const handleEnd = () => {
+        document.removeEventListener("pointermove", handleMove);
         to !== index &&
           onSortEnd({
             order: state.order,
@@ -192,8 +192,8 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
         handleCleanUp();
       };
 
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp, { once: true });
+      document.addEventListener("pointermove", handleMove);
+      document.addEventListener("pointerup", handleEnd, { once: true });
     },
     [onSortEnd, handleCleanUp, getRect, scrollRef, state],
   );

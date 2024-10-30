@@ -6,15 +6,15 @@ export default defineConfig({
   build: {
     lib: {
       name: "react-sorta",
-      fileName: "react-sorta.js",
       entry: resolve(__dirname, "src/index.tsx"),
+      formats: ["es", "umd"],
+      fileName: (format) => `index.${format}.js`,
     },
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
+      external: ["react", "react/jsx-runtime"],
       output: {
         globals: {
           "react": "React",
-          "react-dom": "ReactDOM",
           "react/jsx-runtime": "ReactJsxRuntime",
         },
       },

@@ -1,6 +1,6 @@
 {
   "name": "react-sorta",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "Aleksandr Gurianov",
     "url": "http://golova.pro"
@@ -14,8 +14,8 @@
     "url": "https://github.com/graverok/react-sorta/issues"
   },
   "license": "MIT",
-  "main": "dist/geoditor.cjs.js",
-  "browser": "dist/react-sorta.umd.js",
+  "module": "dist/index.es.js",
+  "main": "dist/index.udm.js",
   "types": "dist/index.d.ts",
   "keywords": [
     "sortable",
