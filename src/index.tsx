@@ -56,16 +56,19 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
   });
 
   const handleCleanUp = useCallback(() => {
-    setSortIndex(-1);
-    setSortTranslate({ x: 0, y: 0 });
     window.cancelAnimationFrame(state.raf);
-    state.raf = 0;
-    state.size = { w: 0, h: 0 };
-    state.scroll = { x: 0, y: 0 };
     state.direction = 0;
+    state.index = -1;
+    state.translate = { x: 0, y: 0 };
+    state.scroll = { x: 0, y: 0 };
+    state.size = { w: 0, h: 0 };
+    state.order.sort((a, b) => a - b);
+    state.raf = 0;
     state.clone?.element?.parentElement?.removeChild(state.clone.element);
     state.clone.element = null;
     rects.clear();
+    setSortIndex(-1);
+    setSortTranslate({ x: 0, y: 0 });
   }, [state, rects]);
 
   useLayoutEffect(() => {
