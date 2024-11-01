@@ -1,0 +1,11 @@
+.item.-number > strong {
+    flex-basis: 16px;
+    margin-right: -4px;
+    font-weight: inherit;
+    color: #000;
+}
+
+.item.-number[aria-disabled="true"] > i,
+.item.-number[aria-disabled="true"] > span {
+    transition: transform 0.2s;
+}

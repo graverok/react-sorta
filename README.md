@@ -1,15 +1,17 @@
 # Sorta
-A simple sortable list for React. It doesn't affect the DOM tree by itself: no styles are applied¹, 
-and no elements are created or copied². It just provides `translate: {x: number; y: number}`
-property representing the elements offset values and operates only within single container.
 
-Works automatically either in a vertical or horizontal direction.
+<img width="540" height="215" alt="react-sorta" src="lib/demo.gif" style="border: 1px solid #CCC; border-radius: 8px"/>
 
-> ¹ Gives you freedom in applying styles: `transform: translate`, `margin`, `left`/`right`, it's up to you.
+A simple yet powerful sortable list for React. It doesn't affect the DOM tree by itself:
+no styles are applied, and no elements are created or copied. It just provides
+`translate: {x: number; y: number}`property representing the elements offset values
+and operates only within single container that gives you freedom in applying styles
+(`transform`, `margin` or `left/top`) and keeps you safe if your CSS has cascade
+dependencies (`.container > .item {...}`) which obviously doesn't work with cloning
+and appending element to document.body.
 
-> ² Keeps you safe if your CSS has some parent dependency:
-> `.container > .item {...}`
-> which obviously doesn't work with cloning and appending element to document.body.
+Works automatically either in a vertical or horizontal direction. Supports scrolling
+containers and virtualized lists.
 
 ## Basic usage
 ### Container
