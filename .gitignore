@@ -6,11 +6,9 @@
 .pnp.js
 
 # develop
-/dev.ts
-/index.html
+/demo/index.html
 
 # production
-/build
 /dist
 
 # misc
@@ -20,4 +18,3 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 /.idea
-/dev/

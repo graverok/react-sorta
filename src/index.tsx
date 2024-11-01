@@ -20,7 +20,6 @@ export interface SortaProps {
 
 export type SortaElementProps<T = object> = T & {
   index: number;
-  ref: React.ForwardedRef<HTMLElement>;
   onSortStart: React.MouseEventHandler<HTMLElement>;
   translate: { x: number; y: number };
   isSorting: boolean;
@@ -113,6 +112,7 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
   const onSortStart = useCallback(
     (index: number, e: React.MouseEvent | React.PointerEvent) => {
       let to = index;
+      let ts = 0;
       setSortIndex(index);
       state.scroll = {
         y: scrollRef?.current?.scrollTop ?? 0,
@@ -136,12 +136,13 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
         r: itemBounds.r + (state.order.length - 1 - index) * state.size.w,
       };
 
-      const calculate = () => {
+      const calculate = (time: number) => {
         const [translate, nextScroll] = getDragParams(
           {
             x: currentPosition.x - startPosition.x,
             y: currentPosition.y - startPosition.y,
           },
+          time - ts,
           startOffset,
           itemBounds,
           state.scroll,
@@ -149,11 +150,15 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
           scrollRect,
           limits,
         );
+        ts = time;
 
         if (currentScroll.x !== nextScroll.x || currentScroll.y !== nextScroll.y) {
           currentScroll.x = nextScroll.x;
           currentScroll.y = nextScroll.y;
-          setScroll(nextScroll);
+          setScroll({
+            x: Math.round(currentScroll.x),
+            y: Math.round(currentScroll.y),
+          });
           state.raf = window.requestAnimationFrame(calculate);
         }
         setSortTranslate(translate);
@@ -339,6 +344,7 @@ const initSortParams = (
 
 const getDragParams = (
   delta: Position,
+  ts: number,
   startOffset: Position,
   itemBounds: Bounds,
   startScroll: Position,
@@ -368,23 +374,28 @@ const getDragParams = (
   offset.y -= startOffset.y;
 
   const scroll: Position = {
-    x: Math.min(scrollRect.w, Math.max(0, currentScroll.x + offset.x)),
-    y: Math.min(scrollRect.h, Math.max(0, currentScroll.y + offset.y)),
+    x: Math.min(scrollRect.w, Math.max(0, currentScroll.x + offset.x * (ts / 40))),
+    y: Math.min(scrollRect.h, Math.max(0, currentScroll.y + offset.y * (ts / 40))),
+  };
+
+  const scrollDelta = {
+    x: Math.round(scroll.x - startScroll.x),
+    y: Math.round(scroll.y - startScroll.y),
   };
 
   offset.x += Math.max(
-    Math.min(0, delta.x - (limits.l - (itemBounds.l + scroll.x - startScroll.x - offset.x))),
-    delta.x - (limits.r - (itemBounds.r + scroll.x - startScroll.x - offset.x)),
+    Math.min(0, delta.x - (limits.l - (itemBounds.l + scrollDelta.x - offset.x))),
+    delta.x - (limits.r - (itemBounds.r + scrollDelta.x - offset.x)),
   );
   offset.y += Math.max(
-    Math.min(0, delta.y - (limits.t - (itemBounds.t + scroll.y - startScroll.y - offset.y))),
-    delta.y - (limits.b - (itemBounds.b + scroll.y - startScroll.y - offset.y)),
+    Math.min(0, delta.y - (limits.t - (itemBounds.t + scrollDelta.y - offset.y))),
+    delta.y - (limits.b - (itemBounds.b + scrollDelta.y - offset.y)),
   );
 
   return [
     {
-      x: delta.x + scroll.x - startScroll.x - offset.x,
-      y: delta.y + scroll.y - startScroll.y - offset.y,
+      x: delta.x + scrollDelta.x - offset.x,
+      y: delta.y + scrollDelta.y - offset.y,
     },
     scroll,
   ];
