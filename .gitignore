@@ -2,14 +2,17 @@
 
 # dependencies
 /node_modules
-/lib/node_modules/
-/lib/dist/
 /.pnp
 .pnp.js
 
+# development
+/dev
+
+# publishing
+/dist
+
 # misc
 .DS_Store
-
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

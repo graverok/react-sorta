@@ -1,19 +1,28 @@
 # Sorta
 
-<img width="540" height="215" alt="react-sorta" src="docs/demo.gif" style="border: 1px solid #CCC; border-radius: 8px"/>
+A simple yet powerful sortable list for React!
 
-A simple yet powerful sortable list for React. It doesn't affect the DOM tree by itself:
-no styles are applied, and no elements are created or copied. It just provides
-`translate: {x: number; y: number}`property representing the elements offset values
-and operates only within single container that gives you freedom in applying styles
-(`transform`, `margin` or `left/top`) and keeps you safe if your CSS has cascade
-dependencies (`.container > .item {...}`) which obviously doesn't work with cloning
-and appending element to document.body.
+<img width="540" height="215" alt="react-sorta" src="https://graverok.github.io/react-sorta/demo.gif" style="border: 1px solid #CCC; border-radius: 8px"/>
 
-Works automatically either in a vertical or horizontal direction. Supports scrolling
-containers and virtualized lists.
+Sorta works automatically either in a vertical or horizontal direction. Supports **scrolling
+containers** and **virtualized lists** and doesn't affect the DOM tree by itself: no styles are applied, and no elements are created or copied.
+
+It just provides `{x: number; y: number}`property to shift the elements, and it gives you freedom 
+in applying styles: `transform`, `margin` or `left & top`.
+
+It also operates only within a single container that keeps you safe with CSS cascade dependencies 
+(`.container > .item {...}`) that obviously doesn't work with cloning and appending element to document.body.
+
+- **[See Demo](https://graverok.github.io/react-sorta)**
+
 
 ## Basic usage
+```
+npm install react-sorta
+```
+```
+yarn add react-sorta
+```
 ### Container
 ```tsx
 import { useCallback, useState } from "react";

@@ -85,6 +85,7 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
 
   useEffect(() => {
     state.translate = sortTranslate;
+    if (state.clone.element && state.clone.callback) state.clone.callback(sortTranslate, state.clone.element);
   }, [state, sortTranslate]);
 
   const getTranslate = useCallback(
@@ -162,7 +163,6 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
           state.raf = window.requestAnimationFrame(calculate);
         }
         setSortTranslate(translate);
-        if (state.clone.element && state.clone.callback) state.clone.callback(translate, state.clone.element);
 
         const [hover, direction] = getHoveredProps(
           {

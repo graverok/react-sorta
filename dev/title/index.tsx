@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Sorta, SortaEvent, useSorta } from "react-sorta";
+import { Sorta, SortaEvent, useSorta } from "../../src";
 import "./index.css";
 
 export const Title = () => {
