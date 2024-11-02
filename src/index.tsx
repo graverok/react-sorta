@@ -181,6 +181,7 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
       };
 
       const handleMove = (ev: PointerEvent) => {
+        ev.preventDefault();
         currentPosition.x = Math.round(ev.pageX);
         currentPosition.y = Math.round(ev.pageY);
         window.cancelAnimationFrame(state.raf);
@@ -304,6 +305,7 @@ type State = {
     callback?: SortaProps["clone"];
   };
 };
+
 type ContextValue = {
   sortIndex: number;
   sortTranslate: { x: number; y: number };
@@ -374,8 +376,8 @@ const getDragParams = (
   offset.y -= startOffset.y;
 
   const scroll: Position = {
-    x: Math.min(scrollRect.w, Math.max(0, currentScroll.x + offset.x * (ts / 40))),
-    y: Math.min(scrollRect.h, Math.max(0, currentScroll.y + offset.y * (ts / 40))),
+    x: Math.min(scrollRect.w, Math.max(0, currentScroll.x + offset.x * (ts / 35))),
+    y: Math.min(scrollRect.h, Math.max(0, currentScroll.y + offset.y * (ts / 35))),
   };
 
   const scrollDelta = {
