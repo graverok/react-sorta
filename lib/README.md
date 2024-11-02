@@ -1,6 +1,6 @@
 # Sorta
 
-<img width="538" height="215" alt="react-sorta" src="demo.gif" style="border: 1px solid #CCC; border-radius: 8px"/>
+<img width="538" height="215" alt="react-sorta" src="../docs/demo.gif" style="border: 1px solid #CCC; border-radius: 8px"/>
 
 A simple yet powerful sortable list for React. It doesn't affect the DOM tree by itself: 
 no styles are applied, and no elements are created or copied. It just provides 

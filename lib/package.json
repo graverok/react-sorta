@@ -42,6 +42,6 @@
   "files": [
     "dist",
     "README.md",
-    "demo.gif"
+    "../docs/demo.gif"
   ]
 }

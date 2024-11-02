@@ -6,6 +6,6 @@ import svgr from "vite-plugin-svgr";
 export default defineConfig({
   plugins: [tsconfigPaths(), svgr()],
   build: {
-    outDir: "demo/dist",
+    outDir: "docs",
   },
 });
