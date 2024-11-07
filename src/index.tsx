@@ -18,12 +18,11 @@ export interface SortaProps {
   clone?: (translate: SortaElementProps["translate"], element: HTMLElement) => void;
 }
 
-export type SortaElementProps<T = object> = T & {
-  index: number;
+export type SortaElementProps<T extends { index: number } = { index: number }> = T & {
   onSortStart: React.MouseEventHandler<HTMLElement>;
   translate: { x: number; y: number };
-  isSorting: boolean;
-  isActive: boolean;
+  isSortable: boolean;
+  isDragging: boolean;
 };
 
 const SortaContext = createContext<ContextValue>({} as ContextValue);
@@ -121,7 +120,7 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
       };
       state.size = getDragSize(index, getRect);
 
-      const [startPosition, center, itemBounds, startOffset, scrollRect] = initSortParams(
+      const [startPosition, center, itemBounds, startOffset, scrollRect, limits] = initSortParams(
         index,
         e,
         getRect,
@@ -129,13 +128,6 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
       );
       const currentPosition = { ...startPosition };
       const currentScroll = { ...state.scroll };
-
-      const limits: Bounds = getLimits(state.order, getRect) ?? {
-        t: itemBounds.t - index * state.size.h,
-        b: itemBounds.b + (state.order.length - 1 - index) * state.size.h,
-        l: itemBounds.l - index * state.size.w,
-        r: itemBounds.r + (state.order.length - 1 - index) * state.size.w,
-      };
 
       const calculate = (time: number) => {
         const [translate, nextScroll] = getDragParams(
@@ -171,8 +163,8 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
           },
           state.order.map((_, index) => getRect(index)),
         );
-        state.direction = direction as 0 | 1;
         if (hover === -1) return;
+        state.direction = direction as 0 | 1;
         if (state.order.findIndex((num) => num === index) === hover) return;
 
         to = hover;
@@ -239,53 +231,27 @@ export const useSorta = (index: number) => {
   const { registerElement, sortIndex, sortTranslate, getTranslate, onSortStart } = useContext(SortaContext) ?? {};
 
   const ref: React.ForwardedRef<HTMLElement> = useCallback(
-    (el: HTMLElement | null) => {
-      registerElement?.(index, el);
-    },
+    (el: HTMLElement | null) => registerElement?.(index, el),
     [registerElement, index],
   );
 
-  const translate = useMemo(() => {
-    return index === sortIndex ? sortTranslate : getTranslate?.(index) ?? { x: 0, y: 0 };
-  }, [sortIndex, sortTranslate, getTranslate, index]);
-
-  const handleSortStart = useCallback(
-    (e: React.MouseEvent) => {
-      onSortStart?.(index, e);
-    },
-    [onSortStart, index],
+  const { x, y } = useMemo(
+    () => (index === sortIndex ? sortTranslate : getTranslate?.(index) ?? { x: 0, y: 0 }),
+    [sortIndex, sortTranslate, getTranslate, index],
   );
 
   return {
     ref,
-    translate,
-    onSortStart: handleSortStart,
-    isSorting: sortIndex >= 0,
-    isActive: sortIndex === index,
+    translate: useMemo(() => ({ x, y }), [x, y]),
+    onSortStart: useCallback((e: React.MouseEvent) => onSortStart?.(index, e), [onSortStart, index]),
+    isSortable: sortIndex >= 0 && sortIndex !== index,
+    isDragging: sortIndex === index,
   };
 };
 
-export const sortaElement = <T = object,>(Component: React.ComponentType<SortaElementProps<T>>) => {
-  return (props: T & { index: number }) => <SortaWrapper Component={Component} {...props} />;
-};
-
-const SortaWrapper = <T = object,>(
-  props: { Component: React.ComponentType<SortaElementProps<T>> } & T & { index: number },
-) => {
-  const { Component, ...rest } = props;
-  const { onSortStart, isSorting, isActive, translate, ref } = useSorta(props.index);
-
-  return (
-    <Component
-      ref={ref}
-      {...(rest as T & { index: number })}
-      translate={translate}
-      onSortStart={onSortStart}
-      isSorting={isSorting}
-      isActive={isActive}
-    />
-  );
-};
+export const sortaElement =
+  <P extends { index: number }>(Component: React.ExoticComponent<SortaElementProps<P>>) =>
+  (props: P) => <Component {...props} {...useSorta(props.index)} />;
 
 /* Types */
 type Bounds = { t: number; b: number; l: number; r: number };
@@ -320,7 +286,7 @@ const initSortParams = (
   e: MouseEvent | React.MouseEvent,
   getItemRect: (index: number) => Rect | undefined,
   scrollEl: HTMLElement | undefined | null,
-): [Position, Position, Bounds, Position, Rect | undefined] => {
+): [Position, Position, Bounds, Position, Rect | undefined, Bounds | undefined] => {
   const itemRect = getItemRect(index);
   const itemBounds = { l: itemRect?.l ?? 0, r: itemRect?.r ?? 0, t: itemRect?.t ?? 0, b: itemRect?.b ?? 0 };
   const scrollRect = getScrollRect(scrollEl);
@@ -341,6 +307,14 @@ const initSortParams = (
       y: scrollRect ? Math.max(Math.min(0, itemBounds.t - scrollRect.t), itemBounds.b - scrollRect.b) : 0,
     },
     scrollRect,
+    scrollRect && scrollEl
+      ? {
+          t: scrollRect.t - scrollEl.scrollTop,
+          b: scrollRect.b + scrollRect.h - scrollEl.scrollTop,
+          l: scrollRect.l - scrollEl.scrollLeft,
+          r: scrollRect.r + scrollRect.w - scrollEl.scrollLeft,
+        }
+      : undefined,
   ];
 };
 
@@ -352,8 +326,10 @@ const getDragParams = (
   startScroll: Position,
   currentScroll: Position,
   scrollRect: Rect | undefined,
-  limits: Bounds,
+  limits?: Bounds,
 ): [Position, Position] => {
+  if (!limits) return [{ x: delta.x, y: delta.y }, currentScroll];
+
   if (!scrollRect)
     return [
       {
@@ -423,9 +399,11 @@ const getDragSize = (index: number, getItemRect: (index: number) => Rect | undef
   return { w: width, h: height };
 };
 
-const getCSSProperty = (value: string): number => {
-  if (!value) return 0;
-  return +value.substring(0, value.length - 2);
+const getCSSProperties = (element: HTMLElement, ...keys: (keyof CSSStyleDeclaration)[]): number => {
+  return keys.reduce((acc: number, key: keyof CSSStyleDeclaration) => {
+    const value = window.getComputedStyle(element)[key]?.toString();
+    return acc + (value ? +value.substring(0, value.length - 2) : 0);
+  }, 0);
 };
 
 const getScrollRect = (scrollEl: HTMLElement | undefined | null): Rect | undefined => {
@@ -433,12 +411,12 @@ const getScrollRect = (scrollEl: HTMLElement | undefined | null): Rect | undefin
   const scrollRect = scrollEl.getBoundingClientRect();
 
   return {
-    t: scrollRect.top + getCSSProperty(window.getComputedStyle(scrollEl).paddingTop),
-    b: scrollRect.bottom - getCSSProperty(window.getComputedStyle(scrollEl).paddingBottom),
-    l: scrollRect.left + getCSSProperty(window.getComputedStyle(scrollEl).paddingLeft),
-    r: scrollRect.right - getCSSProperty(window.getComputedStyle(scrollEl).paddingRight),
-    w: scrollEl.scrollWidth - scrollEl.offsetWidth,
-    h: scrollEl.scrollHeight - scrollEl.offsetHeight,
+    t: scrollRect.top + getCSSProperties(scrollEl, "paddingTop", "borderLeftWidth"),
+    b: scrollRect.bottom - getCSSProperties(scrollEl, "paddingBottom", "borderBottomWidth"),
+    l: scrollRect.left + getCSSProperties(scrollEl, "paddingLeft", "borderLeftWidth"),
+    r: scrollRect.right - getCSSProperties(scrollEl, "paddingRight", "borderRightWidth"),
+    w: scrollEl.scrollWidth - scrollEl.clientWidth,
+    h: scrollEl.scrollHeight - scrollEl.clientHeight,
   };
 };
 
@@ -463,52 +441,13 @@ const getItemRect = (
   };
 };
 
-const getLimits = (indices: number[], getItemRect: (index: number) => Rect | undefined): Bounds | undefined => {
-  const rects = indices.map(getItemRect);
-  if (rects.some((rect) => !rect)) return;
-
-  const limits = (rects as Rect[]).reduce(
-    (acc, rect) => {
-      acc.t.push(rect.t);
-      acc.b.push(rect.b);
-      acc.l.push(rect.l);
-      acc.r.push(rect.r);
-      return acc;
-    },
-    { t: [], l: [], r: [], b: [] } as {
-      t: number[];
-      b: number[];
-      l: number[];
-      r: number[];
-    },
-  );
-
-  return {
-    t: Math.min(...limits.t),
-    r: Math.max(...limits.r),
-    b: Math.max(...limits.b),
-    l: Math.min(...limits.l),
-  };
-};
-
 const checkY = (y: number, rect?: Rect) => rect && y > rect.t && y < rect.b;
 const checkX = (x: number, rect?: Rect) => rect && x > rect.l && x < rect.r;
 
 const getHoveredProps = (position: Position, rects: (Rect | undefined)[]): [number, 0 | 1] => {
-  let hover: number;
-  let direction: 0 | 1;
-  const res = rects.reduce((acc, rect, index) => {
-    if (checkY(position.y, rect)) acc.push(index);
-    return acc;
-  }, [] as number[]);
+  const resX = rects.reduce((acc, rect, index) => (checkX(position.x, rect) ? [...acc, index] : acc), [] as number[]);
+  const resY = rects.reduce((acc, rect, index) => (checkY(position.y, rect) ? [...acc, index] : acc), [] as number[]);
 
-  if (res.length > 1) {
-    direction = 1;
-    hover = res.find((index) => checkX(position.x, rects[index])) ?? -1;
-  } else {
-    direction = 0;
-    hover = res[0] ?? -1;
-  }
-
-  return [hover, direction];
+  if (!resX.length && !resY.length) return [-1, 0];
+  return resY.length === 1 ? [resY[0], 0] : resX.length === 1 ? [resX[0], 1] : [-1, 0];
 };

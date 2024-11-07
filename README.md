@@ -105,6 +105,8 @@ return <div ref={scrollRef} style={{overflow: "auto"}}>
   </Sorta>
 </div>
 ```
+Note, that `scrollRef` can be used not only for scrolling purposes but to prevent items 
+to be dragged outside the parent container.
 
 ## Virtualization
 Using Sorta with virtualization lists is a bit tricky since the virtualizer skips elements 
@@ -145,7 +147,7 @@ const contentRef = useRef<HTMLDivElement | null>(null);
   </FixedSizeList>
 </Sorta>
 ```
-Note that clone callback fires only if the source element is unmounted.
+Note, that clone callback fires only if the source element is unmounted.
 So you won't end up having both source and copy in the DOM tree.
 
 ## Types
@@ -162,11 +164,11 @@ Props of Sorta container
 ### SortaElementProps
 Props of sorting element
 
-|     Property      | Description                                                           | Type                              |  
-|:-----------------:|:----------------------------------------------------------------------|:----------------------------------|
-|     **index**     | Index of the current element                                          | `number`                          |
-|      **ref**      | Used to identify bounds of sorting elements.                          | `React.ForwardedRef<HTMLElement>` |
-| **onScrollStart** | Provides event handler to pass as `onMouseDown`/`onPointerDown` event | `React.MouseEventHandler`         |
-|   **translate**   | Provides `x,y` shift of current element.                              | `{x: number; y: number }`         |
-|   **isSorting**   | Indicates if elements are currently sorting                           | `boolean`                         |
-|   **isActive**    | Indicates if current element is currently dragging                    | `boolean`                         |
+|     Property      | Description                                                              | Type                              |  
+|:-----------------:|:-------------------------------------------------------------------------|:----------------------------------|
+|     **index**     | Index of the current element                                             | `number`                          |
+|      **ref**      | Used to identify bounds of sorting elements.                             | `React.ForwardedRef<HTMLElement>` |
+| **onScrollStart** | Provides event handler to pass as `onMouseDown`/`onPointerDown` event    | `React.MouseEventHandler`         |
+|   **translate**   | Provides `x,y` shift of current element.                                 | `{x: number; y: number }`         |
+|  **isDragging**   | Indicates if current element is currently dragging.                      | `boolean`                         |
+|  **isSortable**   | Indicates if elements are currently sorting except for dragging element. | `boolean`                         |
