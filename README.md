@@ -1,19 +1,18 @@
 # Sorta
 
-A simple yet powerful sortable list for React!
+#### A simple yet powerful sortable list for React!
+
+- Works automatically either in a **vertical** or **horizontal** direction with **rtl** support.
+- **Doesn't affect the DOM tree** by itself: no styles are applied, and no elements are created or copied: 
+  - Provides `{x: number; y: number}`property for you to decide how to apply styles: 
+`transform`, `margin` or `left & top`. 
+  - Operates within a single container that keeps you safe with CSS cascade dependencies 
+(`.container > .item {...}`) that obviously doesn't work with cloning and appending element to `document.body`.
+- Supports **scrollable containers** and **virtualized lists**.
 
 <img width="540" height="215" alt="react-sorta" src="https://graverok.github.io/react-sorta/demo.gif" style="border: 1px solid #CCC; border-radius: 8px"/>
 
-Sorta works automatically either in a vertical or horizontal direction. Supports **scrolling
-containers** and **virtualized lists** and doesn't affect the DOM tree by itself: no styles are applied, and no elements are created or copied.
-
-It just provides `{x: number; y: number}`property to shift the elements, and it gives you freedom 
-in applying styles: `transform`, `margin` or `left & top`.
-
-It also operates only within a single container that keeps you safe with CSS cascade dependencies 
-(`.container > .item {...}`) that obviously doesn't work with cloning and appending element to document.body.
-
-- **[See Demo](https://graverok.github.io/react-sorta)**
+**[See Demo](https://graverok.github.io/react-sorta)**
 
 
 ## Basic usage
@@ -92,20 +91,20 @@ const Item = (props: PropsWithChildren<{ index: number }>) => {
 ```
 
 ## Scroll Container
-It's easy to use Sorta within the scrolling container. Just pass `RefObject<HTMLElement>` to `scrollRef` prop.
+It's easy to use Sorta within the scrolling container. Just pass `RefObject<HTMLElement>` to `containerRef` prop.
 
 ```tsx
-const scrollRef = useRef<HTMLDivElement | null>(null);
+const containerRef = useRef<HTMLDivElement | null>(null);
 
-return <div ref={scrollRef} style={{overflow: "auto"}}>
-  <Sorta onSortEnd={onSortEnd} scrollRef={scrollRef}>
+return <div ref={containerRef} style={{overflow: "auto"}}>
+  <Sorta onSortEnd={onSortEnd} containerRef={containerRef}>
     {list.map((label, index) => (
       <Item index={index} key={label}>{label}</Item>
     ))}
   </Sorta>
 </div>
 ```
-Note, that `scrollRef` can be used not only for scrolling purposes but to prevent items 
+Note, that `containerRef` can be used not only for scrolling purposes but to prevent items 
 to be dragged outside the parent container.
 
 ## Virtualization
@@ -121,14 +120,14 @@ Example with `react-window` virtualizer:
 import { FixedSizeList } from "react-window";
 import { Sorta } from "react-sorta";
 
-const scrollRef = useRef<HTMLDivElement | null>(null);
+const containerRef = useRef<HTMLDivElement | null>(null);
 const contentRef = useRef<HTMLDivElement | null>(null);
 
 <Sorta
   onSortEnd={setList}
   count={list.length}
-  scrollRef={scrollRef}
-  clone={(translate: {x: number; y: number}, element: HTMLElement) => {
+  containerRef={containerRef}
+  clone={(element: HTMLElement, translate: {x: number; y: number}) => {
     element.style.transform = `translate(0, ${translate.y}px)`;
     contentRef.current?.appendChild(element);
   }}>
@@ -137,7 +136,7 @@ const contentRef = useRef<HTMLDivElement | null>(null);
     width={200}
     itemSize={50}
     itemCount={list.length}
-    outerRef={scrollRef}
+    outerRef={containerRef}
     innerRef={contentRef}>
     {({ index, style }) => (
       <Item key={list[index]} index={index} style={style}>
@@ -154,21 +153,21 @@ So you won't end up having both source and copy in the DOM tree.
 ### SortaProps
 Props of Sorta container
 
-| Property | Description                                                                                                                         | Type |          |
-|:--------:|:------------------------------------------------------------------------------------------------------------------------------------|:-----|:--------:|
-|**onSortEnd**| Event fired after finishing sorting. Provides ordered indices of the current list, source and destination indices.                  | `({ order: number[], from: number; to: number }) => void;` | Required |
-|**scrollRef**| Provides scrolling container. Sorta invokes the '.scrollTo()' method on dragging item.                                              | `RefObject<HTMLElement>` | Optional |
-|**count**| Provides the number of elements in the list in case it's impossible to get this number from `children`, e.g., using virtualization. | `number` | Optional |
-|**clone**| Provides callback if dragging element was unmounted, e.g., on scrolling in virtualizer to manually append it to container.          | `(translate: {x: number, y: number}, element: HTMLElement) => void` | Optional |
+|     Property     | Description                                                                                                                         | Type                                                                  |          |
+|:----------------:|:------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------|:--------:|
+|  **onSortEnd**   | Event fired after finishing sorting. Provides ordered indices of the current list, source and destination indices.                  | `({ order: number[], from: number; to: number }) => void;`            | Required |
+| **containerRef** | Provides items container. Used to get bounding rect and invoke the '.scrollTo()' method when dragging item.                         | `RefObject<HTMLElement>`                                              | Optional |
+|    **count**     | Provides the number of elements in the list in case it's impossible to get this number from `children`, e.g., using virtualization. | `number`                                                              | Optional |
+|    **clone**     | Provides callback if dragging element was unmounted, e.g. in virtualized lists, to manually append it container                     | `(element: HTMLElement, translate: { x: number, y: number }) => void` | Optional |
 
 ### SortaElementProps
 Props of sorting element
 
-|     Property      | Description                                                              | Type                              |  
-|:-----------------:|:-------------------------------------------------------------------------|:----------------------------------|
-|     **index**     | Index of the current element                                             | `number`                          |
-|      **ref**      | Used to identify bounds of sorting elements.                             | `React.ForwardedRef<HTMLElement>` |
-| **onScrollStart** | Provides event handler to pass as `onMouseDown`/`onPointerDown` event    | `React.MouseEventHandler`         |
-|   **translate**   | Provides `x,y` shift of current element.                                 | `{x: number; y: number }`         |
-|  **isDragging**   | Indicates if current element is currently dragging.                      | `boolean`                         |
-|  **isSortable**   | Indicates if elements are currently sorting except for dragging element. | `boolean`                         |
+|    Property     | Description                                                                      | Type                              |  
+|:---------------:|:---------------------------------------------------------------------------------|:----------------------------------|
+|    **index**    | Index of the current element                                                     | `number`                          |
+|     **ref**     | Used to identify bounds of sorting elements.                                     | `React.ForwardedRef<HTMLElement>` |
+| **onSortStart** | Provides event handler to pass on element as `onMouseDown`/`onPointerDown` event | `React.MouseEventHandler`         |
+|  **translate**  | Provides `x,y` shift of current element.                                         | `{ x: number; y: number }`        |
+| **isDragging**  | Indicates if current element is currently dragging.                              | `boolean`                         |
+| **isSortable**  | Indicates if elements are currently sorting except for dragging element.         | `boolean`                         |

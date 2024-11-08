@@ -14,8 +14,8 @@ export type SortaEvent = { order: number[]; from: number; to: number };
 export interface SortaProps {
   onSortEnd: (event: SortaEvent) => void;
   count?: number;
-  scrollRef?: React.RefObject<HTMLElement>;
-  clone?: (translate: SortaElementProps["translate"], element: HTMLElement) => void;
+  containerRef?: React.RefObject<HTMLElement>;
+  clone?: (element: HTMLElement, translate: SortaElementProps["translate"]) => void;
 }
 
 export type SortaElementProps<T extends { index: number } = { index: number }> = T & {
@@ -28,7 +28,7 @@ export type SortaElementProps<T extends { index: number } = { index: number }> =
 const SortaContext = createContext<ContextValue>({} as ContextValue);
 
 export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
-  const { count, onSortEnd, scrollRef, children, clone } = props;
+  const { count, onSortEnd, containerRef, children, clone } = props;
   const { Provider } = SortaContext;
 
   const [sortIndex, setSortIndex] = useState(-1);
@@ -40,60 +40,58 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
 
   /** Mutable helper state */
   const [state] = useState<State>({
-    direction: 0,
-    index: -1,
-    translate: { x: 0, y: 0 },
-    scroll: { x: 0, y: 0 },
-    size: { w: 0, h: 0 },
-    order: [],
-    raf: 0,
-    clone: {
-      element: null,
-      callback: clone,
-    },
+    dr: 0,
+    i: -1,
+    tr: { x: 0, y: 0 },
+    sc: { x: 0, y: 0 },
+    sz: { w: 0, h: 0 },
+    o: [],
+    f: 0,
+    ce: null,
+    cc: clone,
   });
 
   const handleCleanUp = useCallback(() => {
-    window.cancelAnimationFrame(state.raf);
-    state.direction = 0;
-    state.index = -1;
-    state.translate = { x: 0, y: 0 };
-    state.scroll = { x: 0, y: 0 };
-    state.size = { w: 0, h: 0 };
-    state.order.sort((a, b) => a - b);
-    state.raf = 0;
-    state.clone?.element?.parentElement?.removeChild(state.clone.element);
-    state.clone.element = null;
+    window.cancelAnimationFrame(state.f);
+    state.dr = 0;
+    state.i = -1;
+    state.tr = { x: 0, y: 0 };
+    state.sc = { x: 0, y: 0 };
+    state.sz = { w: 0, h: 0 };
+    state.o.sort((a, b) => a - b);
+    state.f = 0;
+    state.ce?.parentElement?.removeChild(state.ce);
+    state.ce = null;
     rects.clear();
     setSortIndex(-1);
     setSortTranslate({ x: 0, y: 0 });
   }, [state, rects]);
 
   useLayoutEffect(() => {
-    state.order = [...new Array(count ?? Children.count(children))].map((_, index) => index);
+    state.o = [...new Array(count ?? Children.count(children))].map((_, index) => index);
     return () => handleCleanUp();
   }, [children, count, handleCleanUp]);
 
   useEffect(() => {
-    state.index = sortIndex;
+    state.i = sortIndex;
   }, [state, sortIndex]);
 
   useEffect(() => {
-    scroll && scrollRef?.current?.scrollTo({ left: scroll.x, top: scroll.y });
-  }, [scroll, scrollRef]);
+    scroll && containerRef?.current?.scrollTo({ left: scroll.x, top: scroll.y });
+  }, [scroll, containerRef]);
 
   useEffect(() => {
-    state.translate = sortTranslate;
-    if (state.clone.element && state.clone.callback) state.clone.callback(sortTranslate, state.clone.element);
+    state.tr = sortTranslate;
+    if (state.ce && state.cc) state.cc(state.ce, state.tr);
   }, [state, sortTranslate]);
 
   const getTranslate = useCallback(
     (index: number) => {
-      const position = state.order.findIndex((num) => num === index);
+      const position = state.o.findIndex((num) => num === index);
       if (index === position) return { x: 0, y: 0 };
       return {
-        x: state.direction * (index < position ? state.size.w : -state.size.w),
-        y: (1 - state.direction) * (index < position ? state.size.h : -state.size.h),
+        x: state.dr * (index < position ? state.sz.w : -state.sz.w),
+        y: (1 - state.dr) * (index < position ? state.sz.h : -state.sz.h),
       };
     },
     [state],
@@ -103,10 +101,10 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
     (index: number) => {
       const item = items.get(index);
       if (!item) return undefined;
-      if (!rects.get(index)) rects.set(index, getItemRect(item, scrollRef?.current, state.scroll));
+      if (!rects.get(index)) rects.set(index, getItemRect(item, containerRef?.current, state.sc));
       return rects.get(index) as Rect;
     },
-    [rects, items, scrollRef],
+    [rects, items, containerRef],
   );
 
   const onSortStart = useCallback(
@@ -114,20 +112,20 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
       let to = index;
       let ts = 0;
       setSortIndex(index);
-      state.scroll = {
-        y: scrollRef?.current?.scrollTop ?? 0,
-        x: scrollRef?.current?.scrollLeft ?? 0,
+      state.sc = {
+        y: containerRef?.current?.scrollTop ?? 0,
+        x: containerRef?.current?.scrollLeft ?? 0,
       };
-      state.size = getDragSize(index, getRect);
+      state.sz = getDragSize(index, getRect);
 
-      const [startPosition, center, itemBounds, startOffset, scrollRect, limits] = initSortParams(
+      const [startPosition, center, itemBounds, startOffset, containerRect, limits] = initSortParams(
         index,
         e,
         getRect,
-        scrollRef?.current,
+        containerRef?.current,
       );
       const currentPosition = { ...startPosition };
-      const currentScroll = { ...state.scroll };
+      const currentScroll = { ...state.sc };
 
       const calculate = (time: number) => {
         const [translate, nextScroll] = getDragParams(
@@ -138,9 +136,9 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
           time - ts,
           startOffset,
           itemBounds,
-          state.scroll,
+          state.sc,
           currentScroll,
-          scrollRect,
+          containerRect,
           limits,
         );
         ts = time;
@@ -152,7 +150,7 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
             x: Math.round(currentScroll.x),
             y: Math.round(currentScroll.y),
           });
-          state.raf = window.requestAnimationFrame(calculate);
+          state.f = window.requestAnimationFrame(calculate);
         }
         setSortTranslate(translate);
 
@@ -161,30 +159,30 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
             x: center.x + translate.x,
             y: center.y + translate.y,
           },
-          state.order.map((_, index) => getRect(index)),
+          state.o.map((_, index) => getRect(index)),
         );
         if (hover === -1) return;
-        state.direction = direction as 0 | 1;
-        if (state.order.findIndex((num) => num === index) === hover) return;
+        state.dr = direction as 0 | 1;
+        if (state.o.findIndex((num) => num === index) === hover) return;
 
         to = hover;
-        state.order.sort((a, b) => a - b);
-        if (to !== index) state.order.splice(hover, 0, state.order.splice(index, 1)[0]);
+        state.o.sort((a, b) => a - b);
+        if (to !== index) state.o.splice(hover, 0, state.o.splice(index, 1)[0]);
       };
 
       const handleMove = (ev: PointerEvent) => {
         ev.preventDefault();
         currentPosition.x = Math.round(ev.pageX);
         currentPosition.y = Math.round(ev.pageY);
-        window.cancelAnimationFrame(state.raf);
-        state.raf = window.requestAnimationFrame(calculate);
+        window.cancelAnimationFrame(state.f);
+        state.f = window.requestAnimationFrame(calculate);
       };
 
       const handleEnd = () => {
         document.removeEventListener("pointermove", handleMove);
         to !== index &&
           onSortEnd({
-            order: state.order,
+            order: state.o,
             from: index,
             to,
           });
@@ -194,18 +192,18 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
       document.addEventListener("pointermove", handleMove);
       document.addEventListener("pointerup", handleEnd, { once: true });
     },
-    [onSortEnd, handleCleanUp, getRect, scrollRef, state],
+    [onSortEnd, handleCleanUp, getRect, containerRef, state],
   );
 
   const registerElement = useCallback(
     (index: number, el: HTMLElement | null) => {
-      if (state.clone.callback && index === state.index) {
+      if (state.cc && index === state.i) {
         if (!el && items.get(index)) {
-          state.clone.element = items.get(index) as HTMLElement;
-          state.clone.callback(state.translate, state.clone.element);
+          state.ce = items.get(index) as HTMLElement;
+          state.cc(state.ce, state.tr);
         } else {
-          state.clone.element?.parentElement?.removeChild(state.clone.element);
-          state.clone.element = null;
+          state.ce?.parentElement?.removeChild(state.ce);
+          state.ce = null;
         }
       }
       items.set(index, el);
@@ -259,17 +257,15 @@ type Size = { w: number; h: number };
 type Rect = Bounds & Size;
 type Position = { x: number; y: number };
 type State = {
-  scroll: Position;
-  size: Size;
-  index: number;
-  direction: 0 | 1;
-  translate: Position;
-  order: number[];
-  raf: number;
-  clone: {
-    element: HTMLElement | null;
-    callback?: SortaProps["clone"];
-  };
+  sc: Position;
+  sz: Size;
+  i: number;
+  dr: 0 | 1;
+  tr: Position;
+  o: number[];
+  f: number;
+  ce: HTMLElement | null;
+  cc?: SortaProps["clone"];
 };
 
 type ContextValue = {
@@ -285,11 +281,11 @@ const initSortParams = (
   index: number,
   e: MouseEvent | React.MouseEvent,
   getItemRect: (index: number) => Rect | undefined,
-  scrollEl: HTMLElement | undefined | null,
+  containerEl: HTMLElement | undefined | null,
 ): [Position, Position, Bounds, Position, Rect | undefined, Bounds | undefined] => {
   const itemRect = getItemRect(index);
   const itemBounds = { l: itemRect?.l ?? 0, r: itemRect?.r ?? 0, t: itemRect?.t ?? 0, b: itemRect?.b ?? 0 };
-  const scrollRect = getScrollRect(scrollEl);
+  const containerRect = getContainerRect(containerEl);
   const position = {
     x: Math.round(e.pageX),
     y: Math.round(e.pageY),
@@ -303,16 +299,16 @@ const initSortParams = (
     },
     itemBounds,
     {
-      x: scrollRect ? Math.max(Math.min(0, itemBounds.l - scrollRect.l), itemBounds.r - scrollRect.r) : 0,
-      y: scrollRect ? Math.max(Math.min(0, itemBounds.t - scrollRect.t), itemBounds.b - scrollRect.b) : 0,
+      x: containerRect ? Math.max(Math.min(0, itemBounds.l - containerRect.l), itemBounds.r - containerRect.r) : 0,
+      y: containerRect ? Math.max(Math.min(0, itemBounds.t - containerRect.t), itemBounds.b - containerRect.b) : 0,
     },
-    scrollRect,
-    scrollRect && scrollEl
+    containerRect,
+    containerRect && containerEl
       ? {
-          t: scrollRect.t - scrollEl.scrollTop,
-          b: scrollRect.b + scrollRect.h - scrollEl.scrollTop,
-          l: scrollRect.l - scrollEl.scrollLeft,
-          r: scrollRect.r + scrollRect.w - scrollEl.scrollLeft,
+          t: containerRect.t - containerEl.scrollTop,
+          b: containerRect.b + containerRect.h - containerEl.scrollTop,
+          l: containerRect.l - containerEl.scrollLeft,
+          r: containerRect.r + containerRect.w - containerEl.scrollLeft,
         }
       : undefined,
   ];
@@ -325,12 +321,12 @@ const getDragParams = (
   itemBounds: Bounds,
   startScroll: Position,
   currentScroll: Position,
-  scrollRect: Rect | undefined,
+  containerRect: Rect | undefined,
   limits?: Bounds,
 ): [Position, Position] => {
   if (!limits) return [{ x: delta.x, y: delta.y }, currentScroll];
 
-  if (!scrollRect)
+  if (!containerRect)
     return [
       {
         x: delta.x - Math.max(Math.min(0, delta.x - (limits.l - itemBounds.l)), delta.x - (limits.r - itemBounds.r)),
@@ -340,8 +336,8 @@ const getDragParams = (
     ];
 
   const offset: Position = {
-    x: Math.max(Math.min(0, delta.x + itemBounds.l - scrollRect.l), delta.x + itemBounds.r - scrollRect.r),
-    y: Math.max(Math.min(0, delta.y + itemBounds.t - scrollRect.t), delta.y + itemBounds.b - scrollRect.b),
+    x: Math.max(Math.min(0, delta.x + itemBounds.l - containerRect.l), delta.x + itemBounds.r - containerRect.r),
+    y: Math.max(Math.min(0, delta.y + itemBounds.t - containerRect.t), delta.y + itemBounds.b - containerRect.b),
   };
 
   startOffset.y =
@@ -352,8 +348,8 @@ const getDragParams = (
   offset.y -= startOffset.y;
 
   const scroll: Position = {
-    x: Math.min(scrollRect.w, Math.max(0, currentScroll.x + offset.x * (ts / 35))),
-    y: Math.min(scrollRect.h, Math.max(0, currentScroll.y + offset.y * (ts / 35))),
+    x: Math.min(containerRect.w, Math.max(0, currentScroll.x + offset.x * (ts / 35))),
+    y: Math.min(containerRect.h, Math.max(0, currentScroll.y + offset.y * (ts / 35))),
   };
 
   const scrollDelta = {
@@ -383,20 +379,22 @@ const getDragSize = (index: number, getItemRect: (index: number) => Rect | undef
   const rect = getItemRect(index);
   if (!rect) return { w: 0, h: 0 };
 
-  const width = rect.r - rect.l;
-  const height = rect.b - rect.t;
   const next = getItemRect(index + 1);
   const prev = getItemRect(index - 1);
 
   if (next) {
-    return { w: width + next.l - rect.r, h: height + next.t - rect.b };
+    const h: "l" | "r" = next.l > rect.l ? "l" : "r";
+    const v: "t" | "b" = next.t > rect.t ? "t" : "b";
+    return { w: next[h] - rect[h], h: next[v] - rect[v] };
   }
 
   if (prev) {
-    return { w: width + rect.l - prev.r, h: height + rect.t - prev.b };
+    const h: "l" | "r" = rect.l < prev.l ? "r" : "l";
+    const v: "t" | "b" = rect.t < prev.t ? "b" : "t";
+    return { w: rect[h] - prev[h], h: rect[v] - prev[v] };
   }
 
-  return { w: width, h: height };
+  return { w: rect.r - rect.l, h: rect.b - rect.t };
 };
 
 const getCSSProperties = (element: HTMLElement, ...keys: (keyof CSSStyleDeclaration)[]): number => {
@@ -406,29 +404,29 @@ const getCSSProperties = (element: HTMLElement, ...keys: (keyof CSSStyleDeclarat
   }, 0);
 };
 
-const getScrollRect = (scrollEl: HTMLElement | undefined | null): Rect | undefined => {
-  if (!scrollEl) return undefined;
-  const scrollRect = scrollEl.getBoundingClientRect();
+const getContainerRect = (containerEl: HTMLElement | undefined | null): Rect | undefined => {
+  if (!containerEl) return undefined;
+  const containerRect = containerEl.getBoundingClientRect();
 
   return {
-    t: scrollRect.top + getCSSProperties(scrollEl, "paddingTop", "borderLeftWidth"),
-    b: scrollRect.bottom - getCSSProperties(scrollEl, "paddingBottom", "borderBottomWidth"),
-    l: scrollRect.left + getCSSProperties(scrollEl, "paddingLeft", "borderLeftWidth"),
-    r: scrollRect.right - getCSSProperties(scrollEl, "paddingRight", "borderRightWidth"),
-    w: scrollEl.scrollWidth - scrollEl.clientWidth,
-    h: scrollEl.scrollHeight - scrollEl.clientHeight,
+    t: containerRect.top + getCSSProperties(containerEl, "paddingTop", "borderLeftWidth"),
+    b: containerRect.bottom - getCSSProperties(containerEl, "paddingBottom", "borderBottomWidth"),
+    l: containerRect.left + getCSSProperties(containerEl, "paddingLeft", "borderLeftWidth"),
+    r: containerRect.right - getCSSProperties(containerEl, "paddingRight", "borderRightWidth"),
+    w: containerEl.scrollWidth - containerEl.clientWidth,
+    h: containerEl.scrollHeight - containerEl.clientHeight,
   };
 };
 
 const getItemRect = (
   item: HTMLElement,
-  scrollEl: HTMLElement | null | undefined,
+  containerEl: HTMLElement | null | undefined,
   initial: { x: number; y: number },
 ): Rect => {
   const rect = item.getBoundingClientRect();
   const delta = {
-    x: scrollEl ? scrollEl.scrollLeft - initial.x : 0,
-    y: scrollEl ? scrollEl.scrollTop - initial.y : 0,
+    x: containerEl ? containerEl.scrollLeft - initial.x : 0,
+    y: containerEl ? containerEl.scrollTop - initial.y : 0,
   };
 
   return {
