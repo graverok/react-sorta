@@ -15,7 +15,7 @@ export interface SortaProps {
   onSortEnd: (event: SortaEvent) => void;
   count?: number;
   containerRef?: React.RefObject<HTMLElement>;
-  clone?: (element: HTMLElement, translate: SortaElementProps["translate"]) => void;
+  onItemUnmount?: (element: HTMLElement, translate: SortaElementProps["translate"]) => void;
 }
 
 export type SortaElementProps<T extends { index: number } = { index: number }> = T & {
@@ -28,7 +28,7 @@ export type SortaElementProps<T extends { index: number } = { index: number }> =
 const SortaContext = createContext<ContextValue>({} as ContextValue);
 
 export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
-  const { count, onSortEnd, containerRef, children, clone } = props;
+  const { count, onSortEnd, containerRef, children, onItemUnmount } = props;
   const { Provider } = SortaContext;
 
   const [sortIndex, setSortIndex] = useState(-1);
@@ -47,9 +47,13 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
     sz: { w: 0, h: 0 },
     o: [],
     f: 0,
-    ce: null,
-    cc: clone,
+    el: null,
+    um: onItemUnmount,
   });
+
+  useEffect(() => {
+    state.um = onItemUnmount;
+  }, [state, onItemUnmount]);
 
   const handleCleanUp = useCallback(() => {
     window.cancelAnimationFrame(state.f);
@@ -60,8 +64,8 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
     state.sz = { w: 0, h: 0 };
     state.o.sort((a, b) => a - b);
     state.f = 0;
-    state.ce?.parentElement?.removeChild(state.ce);
-    state.ce = null;
+    state.el?.parentElement?.removeChild(state.el);
+    state.el = null;
     rects.clear();
     setSortIndex(-1);
     setSortTranslate({ x: 0, y: 0 });
@@ -82,7 +86,7 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
 
   useEffect(() => {
     state.tr = sortTranslate;
-    if (state.ce && state.cc) state.cc(state.ce, state.tr);
+    if (state.el && state.um) state.um(state.el, state.tr);
   }, [state, sortTranslate]);
 
   const getTranslate = useCallback(
@@ -197,13 +201,13 @@ export const Sorta = (props: React.PropsWithChildren<SortaProps>) => {
 
   const registerElement = useCallback(
     (index: number, el: HTMLElement | null) => {
-      if (state.cc && index === state.i) {
+      if (state.um && index === state.i) {
         if (!el && items.get(index)) {
-          state.ce = items.get(index) as HTMLElement;
-          state.cc(state.ce, state.tr);
+          state.el = items.get(index) as HTMLElement;
+          state.um(state.el, state.tr);
         } else {
-          state.ce?.parentElement?.removeChild(state.ce);
-          state.ce = null;
+          state.el?.parentElement?.removeChild(state.el);
+          state.el = null;
         }
       }
       items.set(index, el);
@@ -264,8 +268,8 @@ type State = {
   tr: Position;
   o: number[];
   f: number;
-  ce: HTMLElement | null;
-  cc?: SortaProps["clone"];
+  el: HTMLElement | null;
+  um?: SortaProps["onItemUnmount"];
 };
 
 type ContextValue = {

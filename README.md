@@ -110,7 +110,7 @@ to be dragged outside the parent container.
 ## Virtualization
 Using Sorta with virtualization lists is a bit tricky since the virtualizer skips elements 
 that are out of bounds so with default usage dragging element will eventually disappear on scrolling. 
-To handle that use `clone` callback prop that passes `translate` and copy of the dragging element 
+To handle that use `onItemUnmount` prop that passes `translate` and copy of the dragging element 
 you can append to the container if needed. 
 
 Also, you need to provide elements count with `count` prop
@@ -127,7 +127,7 @@ const contentRef = useRef<HTMLDivElement | null>(null);
   onSortEnd={setList}
   count={list.length}
   containerRef={containerRef}
-  clone={(element: HTMLElement, translate: {x: number; y: number}) => {
+  onItemUnmount={(element: HTMLElement, translate: {x: number; y: number}) => {
     element.style.transform = `translate(0, ${translate.y}px)`;
     contentRef.current?.appendChild(element);
   }}>
@@ -146,19 +146,17 @@ const contentRef = useRef<HTMLDivElement | null>(null);
   </FixedSizeList>
 </Sorta>
 ```
-Note, that clone callback fires only if the source element is unmounted.
-So you won't end up having both source and copy in the DOM tree.
 
 ## Types
 ### SortaProps
 Props of Sorta container
 
-|     Property     | Description                                                                                                                         | Type                                                                  |          |
-|:----------------:|:------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------|:--------:|
-|  **onSortEnd**   | Event fired after finishing sorting. Provides ordered indices of the current list, source and destination indices.                  | `({ order: number[], from: number; to: number }) => void;`            | Required |
-| **containerRef** | Provides items container. Used to get bounding rect and invoke the '.scrollTo()' method when dragging item.                         | `RefObject<HTMLElement>`                                              | Optional |
-|    **count**     | Provides the number of elements in the list in case it's impossible to get this number from `children`, e.g., using virtualization. | `number`                                                              | Optional |
-|    **clone**     | Provides callback if dragging element was unmounted, e.g. in virtualized lists, to manually append it container                     | `(element: HTMLElement, translate: { x: number, y: number }) => void` | Optional |
+|     Property      | Description                                                                                                                         | Type                                                                  |          |
+|:-----------------:|:------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------|:--------:|
+|   **onSortEnd**   | Event fired after finishing sorting. Provides ordered indices of the current list, source and destination indices.                  | `({ order: number[], from: number; to: number }) => void;`            | Required |
+| **containerRef**  | Provides items container. Used to get bounding rect and invoke the '.scrollTo()' method when dragging item.                         | `RefObject<HTMLElement>`                                              | Optional |
+|     **count**     | Provides the number of elements in the list in case it's impossible to get this number from `children`, e.g., using virtualization. | `number`                                                              | Optional |
+| **onItemUnmount** | Provides callback if dragging element was unmounted, e.g. in virtualized lists, to manually append it container                     | `(element: HTMLElement, translate: { x: number, y: number }) => void` | Optional |
 
 ### SortaElementProps
 Props of sorting element
