@@ -1,5 +1,6 @@
 {
   "name": "react-sorta",
+  "description": "A simple yet powerful sortable list for React!",
   "version": "0.1.10",
   "author": {
     "name": "Aleksandr Gurianov",
